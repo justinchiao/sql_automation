@@ -1,0 +1,4 @@
+# update paragraph example    
+# newquery = {'text': '%sql\nselect e_segment_map["style_guid"] style, e_segment_map["comment"] comment, e_segment_map["type"], f_country \n\tfrom events\n\twhere e_key = "Ai_Avatar_User_Feedback"\n\tand e_segment_map["comment"] is not null\n\tand a_receive_day >= "2023-01-01"\n\tand f_app_name = "YMK"\ngroup by e_segment_map["style_guid"], e_segment_map["comment"], e_segment_map["type"], f_country'}
+# jsonobj = json.dumps(newquery)
+# requests.put('https://query-ntu.perfectcorp.com/zeppelin/api/notebook/2J4GY9RVJ/paragraph/20230718-012835_241882898', jsonobj, auth=HTTPBasicAuth('sinfulheinz', 'Tj7g&tENQ/d-PFnX'))

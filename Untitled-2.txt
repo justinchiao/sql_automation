@@ -1,0 +1,39 @@
+[{'title': 'YCN_New_Sub',
+  
+    'text': "%sql\nselect f_timestamp_day, f_os, e_segment_map['source']as source, e_segment_map['initial_source']as initialsource, e_segment_map['promote_type'], e_segment_map['purchase_id']as purchaseid,coun(distinct f_device_id)as uu, m_appversion,e_segment_map['launcher_group'],e_segment_map['group']as groupname,f_country\nfrom default.events\nwhere e_key 
+    = 'YCN_Popup_Subscribe'\nand a_receive_day >= '2023-07-09'\nand f_timestamp_day >= '2023-07-12' and f_timestamp_day <= '2023-07-19'\nand e_segment_map['purchase_success'] ='yes'\ngroup by f_timestamp_day,f_os, e_segment_map['source'], e_segment_map['initial_source'], e_segment_map['promote_type'], e_segment_map['purchase_id'], m_appversion ,e_segment_map['launcher_group'], e_segment_map['group'], f_country\norder by f_timestamp_day ASC",
+
+    'user': 'anonymous',
+    
+    'dateUpdated': 'Jul 18, 2023 10:05:46 PM',
+    
+    'config': 
+        {'colWidth': 12.0, 'fontSize': 9.0, 'enabled': True, 'results': 
+            {'0': 
+                {'graph': 
+                    {'mode': 'table', 'height': 300.0, 'optionOpen': False, 'setting': 
+                        {'table': 
+                            {'tableGridState': {}, 'tableColumnTypeState': 
+                                {'names': 
+                                    {'f_timestamp_day': 'string', 'f_os': 'string', 'source': 'string', 'initialsource': 'string', 'e_segment_map[promote_type]': 'string', 'purchaseid': 
+                                    'string', 'uu': 'string', 'm_appversion': 'string', 'e_segment_map[launcher_group]': 'string', 'groupname': 'string', 'f_country': 'string'
+                                    },'updated': False
+                                }, 'tableOptionSpecHash': '[{"name":"useFilter","valueType":"boolean","defaultValue":false,"widget":"checkbox","description":"Enable filter for columns"},{"name":"showPagination","valueType":"boolean","defaultValue":false,"widget":"checkbox","description":"Enable pagination for better navigation"},{"name":"showAggregationFooter","valueType":"boolean","defaultValue":false,"widget":"checkbox","description":"Enable a footer for displaying aggregated values"}]', 'tableOptionValue': {'useFilter': False, 'showPagination': False, 'showAggregationFooter': False}, 'updated': False, 'initialized': False
+                            }
+                        }, 'commonSetting': {}
+                    }
+                }
+            }, 'editorSetting': {'language': 'sql', 'editOnDblClick': False, 'completionKey': 'TAB', 'completionSupport': True}, 'editorMode': 'ace/mode/sql', 'title': True
+        },
+    'settings': {'params': {}, 'forms': {}},
+    'results': {'code': 'SUCCESS', 'msg': 
+            [{'type': 'TABLE', 'data': 'f_timestamp_day\tf_os\tsource\tinitialsource\te_segment_map[promote_type]\tpurchaseid\tuu\tm_appversion\te_segment_map[launcher_group]\tgroupname\tf_country\n2023-07-12\tiOS\tcomplete_register\tdirect_launch\tnull\tsubscribe_12_month_ycn\t4\t2.7.0\tnull\tycn_v2_0_202209_pricechange_a^ycn_v2_1_202210_crosspromo_b\tUS\n2023-07-12\tiOS\tphotoedit_premium_looks_panel\tdeeplink\tnull\tsubscribe_12_month_ycn\t1\t2.7.0\tnull\tycn_v2_0_202209_pricechange_b^ycn_v2_1_202210_crosspromo_b\tES\n2023-07-12\tiOS\topeningtutorial_newuser\tdirect_launch\tnull\tSubscribe_Year_Trial_High_Ycn\t1\t2.7.0\tnull\tycn_v2_0_202209_pricechange_b^ycn_v2_1_202210_crosspromo_a\tJP\n2023-07-12\tiOS\tcomplete_register\tdirect_launch\tnull\tsubscribe_12_month_ycn\t2\t2.7.0\tnull\tycn_v2_0_202209_pricechange_a^ycn_v2_1_202210_crosspromo_a\tUS\n2023-07-12\tiOS\topeningtutorial_newuser\tdirect_launch\tnull\tsubscribe_12_month_ycn\t4\t2.7.0\tnull\tycn_v2_0_202209_pricechange_o^ycn_v2_1_202210_crosspromo_o\tUS\n2023-07-12\tiOS\topeningtutorial_newuser\tdirect_launch\tnull\tsubscribe_1_month_ycn\t1\t2.7.0\tnull\tycn_v2_0_202209_pricechange_a^ycn_v2_1_202210_crosspromo_a\tUS\n2023-07-12\tiOS\topeningtutorial_newuser\tdirect_launch\tnull\tsubscribe_12_month_ycn\t1\t2.7.0\tnull\tycn_v2_0_202209_pricechange_a^ycn_v2_1_202210_crosspromo_b\tPH\n2023-07-12\tiOS\tcomplete_register\tdirect_launch\tnull\tsubscribe_12_month_ycn\t1\t2.7.0\tnull\tycn_v2_0_202209_pricechange_a^ycn_v2_1_202210_crosspromo_b\tGB\n'}, {'type': 'TEXT', 'data': ''}]
+        },
+    'apps': [],
+    'jobName': 'paragraph_1689734773280_-1917957632',
+    'id': '20230718-194613_1703583364',
+    'dateCreated': 'Jul 18, 2023 7:46:13 PM',
+    'dateStarted': 'Jul 18, 2023 10:47:55 PM',
+    'dateFinished': 'Jul 18, 2023 10:47:59 PM',
+    'status': 'FINISHED',
+    'progressUpdateIntervalMs': 500},
