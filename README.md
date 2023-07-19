@@ -1,1 +1,1 @@
-# HUE-automation
+# sql_automation
