@@ -1,3 +1,4 @@
+
 ### File and Paragraph naming convention
 -Please use CamelCase(ycpNewUsers) or underscores(ycp_new_users) for sql file names and Zeppelin paragraph titles\
 -Filenames with follow this notation: paragraphTitle_timeDateCompleted.csv\

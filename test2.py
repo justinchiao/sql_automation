@@ -10,7 +10,7 @@ import os
   
 # Path
 path = 'Z:\CPI_Management\Monetization\Auto Project\weekly_output'
-start = 'C:\Users\Justin_Chiao\Documents\GitHub\sql-automation'
+start = 'Users\Justin_Chiao\Documents\GitHub\sql-automation'
 
 relative_path = os.path.relpath(path, start)
   

@@ -1,0 +1,9 @@
+select f_timestamp_day, f_os, e_segment_map['source']as source, e_segment_map['purchase_id']as purchas_id, e_segment_map['gender'], e_segment_map['ai_avatar_bought']as repurchase, count (f_device_id), m_appversion,e_segment_map['style_num']as style_num, e_segment_map['style_guid']as guid,f_country
+from default.events
+where e_key = 'Ai_Avatar_Popup_Purchase'
+and a_receive_day >= '2023-07-02'
+and f_timestamp_day >= '2023-07-02' and f_timestamp_day <= '2023-07-08'
+and e_segment_map['purchase_success'] ='yes'
+and f_app_name = 'YMK'
+group by f_timestamp_day,f_os, e_segment_map['source'], e_segment_map['purchase_id'], e_segment_map['gender'], e_segment_map['ai_avatar_bought'], e_segment_map['style_num'], m_appversion ,e_segment_map['style_guid'], f_country
+order by f_timestamp_day ASC

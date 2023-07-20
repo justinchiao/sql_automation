@@ -1,0 +1,8 @@
+select f_timestamp_day, f_os, e_segment_map['source']as source, e_segment_map['initial_source']as initialsource, e_segment_map['promote_type'], e_segment_map['purchase_id']as purchaseid,count(distinct f_device_id)as uu, m_appversion,e_segment_map['launcher_group'],e_segment_map['group']as groupname,f_country
+from default.events
+where e_key = 'YCE_Popup_Subscribe'
+and a_receive_day >= '2023-07-09'
+and f_timestamp_day >= '2023-07-09' and f_timestamp_day <= '2023-07-15'
+and e_segment_map['purchase_success'] ='yes'
+group by f_timestamp_day,f_os, e_segment_map['source'], e_segment_map['initial_source'], e_segment_map['promote_type'], e_segment_map['purchase_id'], m_appversion ,e_segment_map['launcher_group'], e_segment_map['group'], f_country
+order by f_timestamp_day ASC

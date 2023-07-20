@@ -1,4 +1,32 @@
-# update paragraph example    
-# newquery = {'text': '%sql\nselect e_segment_map["style_guid"] style, e_segment_map["comment"] comment, e_segment_map["type"], f_country \n\tfrom events\n\twhere e_key = "Ai_Avatar_User_Feedback"\n\tand e_segment_map["comment"] is not null\n\tand a_receive_day >= "2023-01-01"\n\tand f_app_name = "YMK"\ngroup by e_segment_map["style_guid"], e_segment_map["comment"], e_segment_map["type"], f_country'}
-# jsonobj = json.dumps(newquery)
-# requests.put('https://query-ntu.perfectcorp.com/zeppelin/api/notebook/2J4GY9RVJ/paragraph/20230718-012835_241882898', jsonobj, auth=HTTPBasicAuth('sinfulheinz', 'Tj7g&tENQ/d-PFnX'))
+import requests
+import json
+from requests.auth import HTTPBasicAuth
+from datetime import datetime
+import time
+import pandas as pd
+import os
+
+
+def main():
+    directory = 'queries'
+    noteID = input("Enter notebook ID:")
+ 
+    queriesList=[]
+    for filename in os.listdir(directory):
+        f = os.path.join(directory, filename)
+        # checking if it is a file
+        if os.path.isfile(f):
+            print(f)
+            query = open('queries\\' + filename)
+            #print(query.read())
+            queriesList.append({'title':filename, 'text':query.read()})
+            query.close()
+    print(queriesList)
+
+    addP = 'https://query-ntu.perfectcorp.com/zeppelin/api/notebook/' + noteID + '/paragraph'
+    for i in range(len(queriesList)):
+        jsonobj = json.dumps(queriesList[i])
+        requests.post(addP, jsonobj, auth=HTTPBasicAuth('sinfulheinz', 'Tj7g&tENQ/d-PFnX'))
+
+if __name__ == "__main__":
+    main()

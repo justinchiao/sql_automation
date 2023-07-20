@@ -4,9 +4,8 @@ from requests.auth import HTTPBasicAuth
 from datetime import datetime
 import time
 import pandas as pd
-
-
-
+import os
+import ctypes
 # test notbook id: 2J4GY9RVJ
 
 def getQueries(noteID):
@@ -67,7 +66,7 @@ def getResults(noteID):
             #if all are finished
             return cleanResults(noteID)
 
-def export(array):
+def export(array, folderName):
     for i in range(len(array)):
         dictionary = {}
         keys = array[i]['columns']
@@ -77,15 +76,15 @@ def export(array):
                 info.append(array[i]['data'][k][j])
             dictionary[keys[j]] = info
         df = pd.DataFrame(dictionary)
-        filename = array[i]['title'] + '_' +array[i]['timeFin'] + '.csv'
-        directory = 'Z:\CPI_Management\Monetization\Auto Project\weekly_output'
-        df.to_csv(filename, encoding='utf-8')
+        
+        path = folderName + '\\' + array[i]['title'] + '_' +array[i]['timeFin'] + '.csv'
+        df.to_csv(path, encoding='utf-8')
 
     
 
 def main():
     #ask for notebook id
-    noteID = input("Enter notebook ID \n")
+    noteID = input("Enter notebook ID:")
 
     #clear old outputs
     clearOutput = 'https://query-ntu.perfectcorp.com/zeppelin/api/notebook/' + noteID + '/clear'
@@ -97,11 +96,13 @@ def main():
     #run all paragraphs
     array = getResults(noteID)
 
-    #convert to excel workbook
-    export(array)
+    #save data as csv
+    now = datetime.now()
+    folderName = now.strftime("%d_%m_%Y_%H.%M.%S")
+    os.mkdir(folderName)
+    export(array, folderName)
 
-    #now = datetime.now()
-    #nowStirng = now.strftime("%b_%d_%Y_%H_%M_%S")
+    ctypes.windll.user32.MessageBoxW(0, "Queries Complete", "", 0x00001000)
 
 if __name__ == "__main__":
     main()
