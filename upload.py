@@ -8,7 +8,7 @@ import os
 
 def main():
     directory = 'queries'
-    noteID = '2J4GY9RVJ'
+    noteID = '#'
     
     queriesList=[]
     for filename in os.listdir(directory):
@@ -22,10 +22,10 @@ def main():
             txtFile.close()
     print(queriesList)
 
-    addP = 'https://query-ntu.perfectcorp.com/zeppelin/api/notebook/' + noteID + '/paragraph'
+    addP = 'server' + noteID + '/paragraph'
     for i in range(len(queriesList)):
         jsonobj = json.dumps(queriesList[i])
-        requests.post(addP, jsonobj, auth=HTTPBasicAuth('sinfulheinz', 'Tj7g&tENQ/d-PFnX'))
+        requests.post(addP, jsonobj, auth=HTTPBasicAuth('#', '#'))
 
 if __name__ == "__main__":
     main()

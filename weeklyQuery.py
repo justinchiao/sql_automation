@@ -6,11 +6,10 @@ import time
 import pandas as pd
 import os
 import ctypes
-# test notbook id: 2J4GY9RVJ
 
 def getQueries(noteID,user,password):
     '''Gets all text from each paragraph'''
-    noteInfoQ = 'https://query-ntu.perfectcorp.com/zeppelin/api/notebook/' + noteID
+    noteInfoQ = 'server' + noteID
     notebookInfo = requests.get(noteInfoQ, auth=HTTPBasicAuth(user, password)).json()['body']
     listParagraphs = notebookInfo['paragraphs']
 
@@ -26,7 +25,7 @@ def cleanResults(noteID,user,password):
     '''returns list of lists containing paragraph ID, Title, and Output [{id, title, timeFin, columns, data}, {id, title, timeFin, columns, data}, etc]'''
 
     #gets json with information about all paragraphs
-    noteInfoQ = 'https://query-ntu.perfectcorp.com/zeppelin/api/notebook/' + noteID
+    noteInfoQ = 'server' + noteID
     results = requests.get(noteInfoQ, auth=HTTPBasicAuth(user, password)).json()['body']['paragraphs']
 
 
@@ -61,7 +60,7 @@ def getResults(noteID,user,password):
     '''Asynchronously runs all paragraphs and returns pharagraph results. Will check for completion at set interval'''
 
     #run all paragraphs, longer runtime notebooks will return 504, but notebook will still run
-    runNote = 'https://query-ntu.perfectcorp.com/zeppelin/api/notebook/job/' + noteID
+    runNote = 'server' + noteID
     requests.post(runNote, auth=HTTPBasicAuth(user, password))
 
     while True:
@@ -69,7 +68,7 @@ def getResults(noteID,user,password):
         time.sleep(60)
 
         #get paragraph status
-        getStatus = 'https://query-ntu.perfectcorp.com/zeppelin/api/notebook/job/' + noteID
+        getStatus = 'server' + noteID
         allStatus = requests.get(getStatus, auth=HTTPBasicAuth(user, password)).json()['body']
 
         #check paragraph status
@@ -106,16 +105,16 @@ def export(array, folderName):
 
 def main():
     #change credentials
-    user = 'sinfulheinz'
-    password = 'Tj7g&tENQ/d-PFnX'
-    noteID = '2J4GY9RVJ'
+    user = '#'
+    password = '#'
+    noteID = '#'
 
     #clear old outputs
-    clearOutput = 'https://query-ntu.perfectcorp.com/zeppelin/api/notebook/' + noteID + '/clear'
+    clearOutput = 'server' + noteID + '/clear'
     requests.put(clearOutput, auth=HTTPBasicAuth(user, password))
 
     #restart interpreter to allow higher setting for output limit
-    requests.put('https://query-ntu.perfectcorp.com/zeppelin/api/interpreter/setting/restart/spark', auth=HTTPBasicAuth(user, password))
+    requests.put('server', auth=HTTPBasicAuth(user, password))
     
     #run all paragraphs
     array = getResults(noteID,user,password)
