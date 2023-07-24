@@ -6,21 +6,20 @@ import time
 import pandas as pd
 import os
 
-
 def main():
     directory = 'queries'
-    noteID = input("Enter notebook ID:")
- 
+    noteID = '2J4GY9RVJ'
+    
     queriesList=[]
     for filename in os.listdir(directory):
         f = os.path.join(directory, filename)
         # checking if it is a file
         if os.path.isfile(f):
             print(f)
-            query = open('queries\\' + filename)
-            #print(query.read())
-            queriesList.append({'title':filename, 'text':query.read()})
-            query.close()
+            txtFile = open('queries\\' + filename)
+            query = '%sql\n' + '--'+ filename[:-4] + '\n\n' + txtFile.read()
+            queriesList.append({'title':filename[:-4], 'text':query})
+            txtFile.close()
     print(queriesList)
 
     addP = 'https://query-ntu.perfectcorp.com/zeppelin/api/notebook/' + noteID + '/paragraph'

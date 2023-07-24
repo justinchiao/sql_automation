@@ -8,9 +8,10 @@ import os
 import ctypes
 # test notbook id: 2J4GY9RVJ
 
-def getQueries(noteID):
+def getQueries(noteID,user,password):
+    '''Gets all text from each paragraph'''
     noteInfoQ = 'https://query-ntu.perfectcorp.com/zeppelin/api/notebook/' + noteID
-    notebookInfo = requests.get(noteInfoQ, auth=HTTPBasicAuth('sinfulheinz', 'Tj7g&tENQ/d-PFnX')).json()['body']
+    notebookInfo = requests.get(noteInfoQ, auth=HTTPBasicAuth(user, password)).json()['body']
     listParagraphs = notebookInfo['paragraphs']
 
     myPs = []
@@ -21,42 +22,55 @@ def getQueries(noteID):
         myPs.append([id, query])
     # myPs is an array of paragraph id's and list of lines in that paragraph
 
-def cleanResults(noteID):
+def cleanResults(noteID,user,password):
     '''returns list of lists containing paragraph ID, Title, and Output [{id, title, timeFin, columns, data}, {id, title, timeFin, columns, data}, etc]'''
+
     #gets json with information about all paragraphs
     noteInfoQ = 'https://query-ntu.perfectcorp.com/zeppelin/api/notebook/' + noteID
-    results = requests.get(noteInfoQ, auth=HTTPBasicAuth('sinfulheinz', 'Tj7g&tENQ/d-PFnX')).json()['body']['paragraphs']
+    results = requests.get(noteInfoQ, auth=HTTPBasicAuth(user, password)).json()['body']['paragraphs']
+
+
     clean = []
     for i in range(len(results)):
+        #first paragraph is to change output line limit settings and will not return output so it is skipped
+        if i == 0:
+            continue
+
+        #extracts necessary information from nested dictionaries
         title = results[i]['title']
         id = results[i]['id']
         timeFinish = results[i]['dateFinished'].replace(' ','_').replace(',','').replace(':','.')
         columns = list(results[i]['config']['results']['0']['graph']['setting']['table']['tableColumnTypeState']['names'].keys())
         rawData = results[i]['results']['msg'][0]['data']
+        
+        #splits data from one long string into 1 string per row
         unsplitRows = rawData.split('\n')
+        #splits each data row into list of strings
         listOfRows = []
         for i in range(len(unsplitRows)):
             if unsplitRows[i] == '':
                 del unsplitRows[i]
             else:
                 listOfRows.append(unsplitRows[i].split('\t'))
-        clean.append({'id':id, 'title':title, 'timeFin':timeFinish, 'columns':columns , 'data':listOfRows})
 
+        #clean is the list of dictionaries to return
+        clean.append({'id':id, 'title':title, 'timeFin':timeFinish, 'columns':columns , 'data':listOfRows[1:]})
     return clean
 
-def getResults(noteID):
+def getResults(noteID,user,password):
+    '''Asynchronously runs all paragraphs and returns pharagraph results. Will check for completion at set interval'''
+
     #run all paragraphs, longer runtime notebooks will return 504, but notebook will still run
     runNote = 'https://query-ntu.perfectcorp.com/zeppelin/api/notebook/job/' + noteID
-    requests.post(runNote, auth=HTTPBasicAuth('sinfulheinz', 'Tj7g&tENQ/d-PFnX'))
+    requests.post(runNote, auth=HTTPBasicAuth(user, password))
 
     while True:
-
-        #wait 5min
-        time.sleep(300)
+        #wait 1min
+        time.sleep(60)
 
         #get paragraph status
         getStatus = 'https://query-ntu.perfectcorp.com/zeppelin/api/notebook/job/' + noteID
-        allStatus = requests.get(getStatus, auth=HTTPBasicAuth('sinfulheinz', 'Tj7g&tENQ/d-PFnX')).json()['body']
+        allStatus = requests.get(getStatus, auth=HTTPBasicAuth(user, password)).json()['body']
 
         #check paragraph status
         for i in range(len(allStatus)):
@@ -64,44 +78,57 @@ def getResults(noteID):
                 break
 
             #if all are finished
-            return cleanResults(noteID)
+            return cleanResults(noteID,user,password)
 
 def export(array, folderName):
+    '''takes list of dictionaries and exports each as its own csv'''
+
     for i in range(len(array)):
         dictionary = {}
+        #gets column headers to use as dictionary keys
         keys = array[i]['columns']
+
+        #restructures data from list per row to list per column
         for j in range(len(keys)):
             info=[]
             for k in range(len(array[i]['data'])):
                 info.append(array[i]['data'][k][j])
             dictionary[keys[j]] = info
+        
+        #converts dictionary to pandas dataframe
         df = pd.DataFrame(dictionary)
         
+        #saves dataframe as csv. file name is paragraph title + server finish date and time. server time is taiwan - 15hr (pacific standard time)
         path = folderName + '\\' + array[i]['title'] + '_' +array[i]['timeFin'] + '.csv'
-        df.to_csv(path, encoding='utf-8')
+        df.to_csv(path, encoding='utf-8',header=True)
 
     
 
 def main():
-    #ask for notebook id
-    noteID = input("Enter notebook ID:")
+    #change credentials
+    user = 'sinfulheinz'
+    password = 'Tj7g&tENQ/d-PFnX'
+    noteID = '2J4GY9RVJ'
 
     #clear old outputs
     clearOutput = 'https://query-ntu.perfectcorp.com/zeppelin/api/notebook/' + noteID + '/clear'
-    requests.put(clearOutput, auth=HTTPBasicAuth('sinfulheinz', 'Tj7g&tENQ/d-PFnX'))
+    requests.put(clearOutput, auth=HTTPBasicAuth(user, password))
 
     #restart interpreter to allow higher setting for output limit
-    requests.put('https://query-ntu.perfectcorp.com/zeppelin/api/interpreter/setting/restart/spark', auth=HTTPBasicAuth('sinfulheinz', 'Tj7g&tENQ/d-PFnX'))
+    requests.put('https://query-ntu.perfectcorp.com/zeppelin/api/interpreter/setting/restart/spark', auth=HTTPBasicAuth(user, password))
     
     #run all paragraphs
-    array = getResults(noteID)
+    array = getResults(noteID,user,password)
+
+    #create folder with name current date and time
+    now = datetime.now()
+    folderName = now.strftime("%b_%d_%Y_%H.%M.%S")
+    os.mkdir(folderName)
 
     #save data as csv
-    now = datetime.now()
-    folderName = now.strftime("%d_%m_%Y_%H.%M.%S")
-    os.mkdir(folderName)
     export(array, folderName)
 
+    #popup window upon completion
     ctypes.windll.user32.MessageBoxW(0, "Queries Complete", "", 0x00001000)
 
 if __name__ == "__main__":
