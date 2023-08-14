@@ -57,7 +57,7 @@ def getResults(noteID,user,password):
 
     while True:
         ### wait time in seconds between status checks
-        time.sleep(30)
+        time.sleep(10)
 
         ### get paragraph status
         getStatus = 'https://ZEPPELIN_SERVER/zeppelin/api/notebook/job/' + noteID
@@ -470,7 +470,7 @@ def delete_datasource(datasource_filename):
 def isDate(string):
     ### try if the string is a date in the correct format as dictedt by the server
     try:
-        t = dt.datetime.strptime(string, "%Y-%m-%d")
+        t = dt.datetime.strptime(string, "%Y-%m-%d") #"%Y-%m-%d" Zeppelin format 2023-01-31, "%m/%d/%Y" excel format 1/31/2023
         return True, t
     except ValueError as err:
         return False, 'not a date'
@@ -486,16 +486,12 @@ def convertToHyper(dictionary, filename):
         columns = []
         for i in range(len(dictionary['columns'])):
             columnName = dictionary['columns'][i]
-            sample = dictionary['data'][2][i]
+            sample = dictionary['data'][2][i].translate(str.maketrans('', '', '$,'))
             #print(sample)
-            if sample.isnumeric(): #checks if value is an interger
-                type = SqlType.int()
-                for j in range(len(dictionary['data'])):
-                    dictionary['data'][j][i] = int(dictionary['data'][j][i])
-            elif sample.isdecimal(): #checks if value is an float
+            if sample.isdecimal(): #checks if value is an float
                 type = SqlType.double()
                 for j in range(len(dictionary['data'])):
-                    dictionary['data'][j][i] = float(dictionary['data'][j][i])
+                    dictionary['data'][j][i] = float(dictionary['data'][j][i].translate(str.maketrans('', '', '$,')))
             elif True in isDate(sample): #checks if value is a date in the same format as the database
                 type = SqlType.date()
                 for j in range(len(dictionary['data'])):
