@@ -4,6 +4,7 @@ import datetime as dt
 import time
 import pandas as pd
 import os
+import re
 import ctypes
 import xml.etree.ElementTree as ET
 import math
@@ -15,7 +16,9 @@ from tkinter import *
 from sys import exit
 
 def cleanResults(noteID,user,password):
-    '''returns list of lists containing paragraph ID, Title, and Output [{id, title, timeFin, columns, data}, {id, title, timeFin, columns, data}, etc]'''
+    '''
+    returns list of lists containing paragraph ID, Title, and Output [{id, title, timeFin, columns, data}, {id, title, timeFin, columns, data}, etc]
+    '''
     print('Formatting Results')
     ### gets json with information about all paragraphs
     noteInfoQ = 'https://ZEPPELIN_SERVER/zeppelin/api/notebook/' + noteID
@@ -178,10 +181,6 @@ def _make_multipart(parts):
 def _check_status(server_response, success_code):
     """
     Checks the server response for possible errors.
-
-    'server_response'       the response received from the server
-    'success_code'          the expected success code for the response
-    Throws an ApiCallError exception if the API call fails.
     """
     if server_response.status_code != success_code:
         parsed_response = ET.fromstring(server_response.text)
@@ -202,15 +201,6 @@ def _check_status(server_response, success_code):
 def sign_in(server, username, password, site=""):
     """
     Signs in to the server specified with the given credentials
-
-    'server'   specified server address
-    'username' is the name (not ID) of the user to sign in as.
-               Note that most of the functions in this example require that the user
-               have server administrator permissions.
-    'password' is the password for the user.
-    'site'     is the ID (as a string) of the site on the server to sign in to. The
-               default is "", which signs in to the default site.
-    Returns the authentication token and the site ID.
     """
     url = server + "/api/{0}/auth/signin".format('3.2')
 
@@ -239,9 +229,6 @@ def sign_in(server, username, password, site=""):
 def sign_out(server, auth_token, version):
     """
     Destroys the active session and invalidates authentication token.
-
-    'server'        specified server address
-    'auth_token'    authentication token that grants user access to API calls
     """
     url = server + "/api/{0}/auth/signout".format(version)
     server_response = requests.post(url, headers={'x-tableau-auth': auth_token})
@@ -251,11 +238,6 @@ def sign_out(server, auth_token, version):
 def start_upload_session(server, auth_token, site_id, version):
     """
     Creates a POST request that initiates a file upload session.
-
-    'server'        specified server address
-    'auth_token'    authentication token that grants user access to API calls
-    'site_id'       ID of the site that the user is signed into
-    Returns a session ID that is used by subsequent functions to identify the upload session.
     """
     print(auth_token)
     url = server + "/api/{0}/sites/{1}/fileUploads".format(version, site_id)
@@ -266,11 +248,7 @@ def start_upload_session(server, auth_token, site_id, version):
 
 def get_default_project_id(server, auth_token, site_id, version, projectName):
     """
-    Returns the project ID for the 'default' project on the Tableau server.
-
-    'server'        specified server address
-    'auth_token'    authentication token that grants user access to API calls
-    'site_id'       ID of the site that the user is signed into
+    Returns the project ID for the desired project on the Tableau server.
     """
     ### name of destination project
     page_num, page_size = 1, 100  # Default paginating values
@@ -325,12 +303,6 @@ def existing(server, auth_token, site_id, datasource_name, version):
 def publish_new_datasource(server, auth_token, site_id, datasource_filename, dest_project_id, version):
     """
     Publishes the data source to the desired project.
-
-    'server'               specified server address
-    'auth_token'           authentication token that grants user access to API calls
-    'site_id'              ID of the site that the user is signed into
-    'datasource_filename'  filename of data source to publish
-    'dest_project_id'      ID of peoject to publish to
     """
     datasource_name, file_extension = datasource_filename.split('.', 1)
     datasource_size = os.path.getsize(datasource_filename)
@@ -394,17 +366,15 @@ def publish_new_datasource(server, auth_token, site_id, datasource_filename, des
 def publish_datasource(server, auth_token, site_id, datasource_filename, dest_project_id, version, datasource_name):
     """
     Publishes the data source to the desired project.
-
-    'server'               specified server address
-    'auth_token'           authentication token that grants user access to API calls
-    'site_id'              ID of the site that the user is signed into
-    'datasource_filename'  filename of data source to publish
-    'dest_project_id'      ID of peoject to publish to
     """
     ### Check if the datasource already exists in tableau. If no, a new datasource will be published
     if existing(server, auth_token, site_id, datasource_name, version) == False:
         publish_new_datasource(server, auth_token, site_id, datasource_filename, dest_project_id, version)
         return
+
+    ### download backup file 
+    datasource_id = get_datasource_id(server, auth_token, site_id, datasource_name, version)
+    download(server, auth_token, site_id, datasource_id, version)
 
     datasource_name, file_extension = datasource_filename.split('.', 1)
     datasource_size = os.path.getsize(datasource_filename)
@@ -464,16 +434,64 @@ def publish_datasource(server, auth_token, site_id, datasource_filename, dest_pr
                                     headers={'x-tableau-auth': auth_token, 'content-type': content_type})
     _check_status(server_response, 201)
 
+def get_datasource_id(server, auth_token, site_id, datasource_name, version):
+    """
+    Gets the id of the desired data source to relocate.
+    """
+    url = server + "/api/{0}/sites/{1}/datasources".format(version, site_id)
+    server_response = requests.get(url, headers={'x-tableau-auth': auth_token})
+    _check_status(server_response, 200)
+    xml_response = ET.fromstring(_encode_for_display(server_response.text))
+
+    datasources = xml_response.findall('.//t:datasource', namespaces=xmlns)
+    for datasource in datasources:
+        if datasource.get('name') == datasource_name:
+            return datasource.get('id')
+    error = "Data source named '{0}' not found.".format(datasource_name)
+    raise LookupError(error)
+
+def download(server, auth_token, site_id, datasource_id,version):
+    """
+    Downloads the desired data source from the server (temp-file).
+    """
+    print("\tDownloading data source to an archive file")
+    url = server + "/api/{0}/sites/{1}/datasources/{2}/content".format(version, site_id, datasource_id)
+    server_response = requests.get(url, headers={'x-tableau-auth': auth_token})
+    _check_status(server_response, 200)
+
+    ### Header format: Content-Disposition: name="tableau_datasource"; filename="datasource-filename"
+    now = dt.datetime.now()
+    currentDir = 'CURRENT_DIRECTORY_PATH'
+    filename = re.findall(r'filename="(.*)"', server_response.headers['Content-Disposition'])[0][:-5]
+    folder = currentDir + filename
+
+    ### check if folder already exists. if not, creat one.
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    path = currentDir + filename + '/' + filename + '-' + now.strftime("%Y-%m-%d_%H-%M-%S") + '.tdsx'
+    ### writes server response to file at path
+    with open(path, 'wb') as f:
+        f.write(server_response.content)
+
 def delete_datasource(datasource_filename):
     os.remove(datasource_filename)
 
 def isDate(string):
-    ### try if the string is a date in the correct format as dictedt by the server
+    '''
+    try if the string is a date in the correct format as dictated by the server
+    '''
     try:
         t = dt.datetime.strptime(string, "%Y-%m-%d") #"%Y-%m-%d" Zeppelin format 2023-01-31, "%m/%d/%Y" excel format 1/31/2023
         return True, t
     except ValueError as err:
         return False, 'not a date'
+
+def isfloat(num):
+    try:
+        float(num)
+        return True
+    except ValueError:
+        return False
 
 def convertToHyper(dictionary, filename):
     with HyperProcess(Telemetry.SEND_USAGE_DATA_TO_TABLEAU, 'myapp') as hyper:
@@ -488,11 +506,11 @@ def convertToHyper(dictionary, filename):
             columnName = dictionary['columns'][i]
             sample = dictionary['data'][2][i].translate(str.maketrans('', '', '$,'))
             #print(sample)
-            if sample.isdecimal(): #checks if value is an float
+            if isfloat(sample): #checks if value is an float
                 type = SqlType.double()
                 for j in range(len(dictionary['data'])):
                     dictionary['data'][j][i] = float(dictionary['data'][j][i].translate(str.maketrans('', '', '$,')))
-            elif True in isDate(sample): #checks if value is a date in the same format as the database
+            elif True in isDate(sample): #checks if value is a date in the same format as the databases
                 type = SqlType.date()
                 for j in range(len(dictionary['data'])):
                     dictionary['data'][j][i] = isDate(dictionary['data'][j][i])[1]
@@ -611,13 +629,13 @@ def main():
 
     ### CHANGE CREDENTIALS MODE BELOW
     # zUser, zPass, noteID, tUser, tPass, tProj, ver = askInfo()
-    zUser = '' # zeppelin username
-    zPass = '' # zeppelin password
-    noteID = '' # zeppelin note ID
-    tUser = '' # tableau username
-    tPass = '' # tableau password
-    tProj = '' # tableau destination project 
-    ver = '' #tableau API version
+    zUser = 'ZEPPELIN_USERNAME' # zeppelin username
+    zPass = 'ZEPPELIN_PASSWORD' # zeppelin password
+    noteID = 'NOTE_ID' # zeppelin note ID
+    tUser = 'TABLEAU_USERNAME' # tableau username
+    tPass = 'TABLEAU_PASSWORD' # tableau password
+    tProj = 'TABLEAU_PROJECT_NAME' # tableau destination project 
+    ver = 'TABLEAU_ API_VERSION' #tableau API version
 
     print('\nBeginning Zeppelin queries')
 
@@ -654,26 +672,22 @@ def main():
 
     ### initialization
     print('\nInitializing')
-    dest_server = 'http://TABLEAU_SERVER/'
-    dest_username = tUser
-    dest_site = ''
-    dest_password = tPass
-    version = ver
+    dest_server = 'TABLEAU_SERVER'
     
     ### sign in
     print("\nSigning in to obtain authentication tokens")
-    dest_auth_token, dest_site_id, dest_user_id = sign_in(dest_server, dest_username, dest_password)
+    dest_auth_token, dest_site_id, dest_user_id = sign_in(dest_server, tPass, tUser)
 
     ### find project id for destination server
     print("\nFinding project id for {0}".format(dest_server))
-    dest_project_id = get_default_project_id(dest_server, dest_auth_token, dest_site_id, version, tProj)
+    dest_project_id = get_default_project_id(dest_server, dest_auth_token, dest_site_id, ver, tProj)
 
     for i in range(len(array)):
-        appendTableau(array[i], dest_server, dest_auth_token, dest_site_id, dest_project_id, version)
+        appendTableau(array[i], dest_server, dest_auth_token, dest_site_id, dest_project_id, ver)
 
     ### sign out
     print("\nSigning out and invalidating the authentication token")
-    sign_out(dest_server, dest_auth_token, version)
+    sign_out(dest_server, dest_auth_token, ver)
 
     ### allows windows to sleep again
     if osSleep:

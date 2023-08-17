@@ -1,13 +1,21 @@
 from tableauhyperapi import HyperProcess, Connection, TableDefinition, SqlType, Telemetry, Inserter, CreateMode
 import csv
 import datetime as dt
+import string
 
 def isDate(string):
     try:
-        t = dt.datetime.strptime(string, "%Y-%m-%d")
+        t = dt.datetime.strptime(string, "%Y-%m-%d") #"%Y-%m-%d" Zeppelin format 2023-01-31, "%m/%d/%Y" excel format 1/31/2023
         return True, t
     except ValueError as err:
         return False, 'not a date'
+    
+def isfloat(num):
+    try:
+        float(num)
+        return True
+    except ValueError:
+        return False
 
 def convertToHyper(dictionary, filename):
     with HyperProcess(Telemetry.SEND_USAGE_DATA_TO_TABLEAU, 'myapp') as hyper:
@@ -20,26 +28,26 @@ def convertToHyper(dictionary, filename):
         columns = []
         for i in range(len(dictionary['columns'])):
             columnName = dictionary['columns'][i]
-            sample = dictionary['data'][2][i]
-            #print(sample)
-            if sample.isnumeric(): #checks if value is an interger
-                type = SqlType.int()
-                for j in range(len(dictionary['data'])):
-                    dictionary['data'][j][i] = int(dictionary['data'][j][i])
-            elif sample.isdecimal(): #checks if value is an float
+            sample = dictionary['data'][20][i].translate(str.maketrans('', '', '$,'))
+            print(sample)
+            if isfloat(sample): #checks if value is an float
                 type = SqlType.double()
+                print('double')
                 for j in range(len(dictionary['data'])):
-                    dictionary['data'][j][i] = float(dictionary['data'][j][i])
+                    dictionary['data'][j][i] = float(dictionary['data'][j][i].translate(str.maketrans('', '', '$,')))
             elif True in isDate(sample): #checks if value is a date in the same format as the database
                 type = SqlType.date()
+                print('date')
                 for j in range(len(dictionary['data'])):
                     dictionary['data'][j][i] = isDate(dictionary['data'][j][i])[1]
             elif len(sample) == 2: #checks if value is shorter than 2
                 if sample in alpha2: #checks if value is in the list of alpha2 country codes
                     type = SqlType.geography()
+                    print('geo')
                     for j in range(len(dictionary['data'])):
                         dictionary['data'][j][i] = bytes(dictionary['data'][j][i], 'utf-8')
             else: 
+                print('text')
                 type = SqlType.text()
                 
             columns.append(TableDefinition.Column(columnName, type)) #add current column to list of columns
@@ -52,11 +60,11 @@ def convertToHyper(dictionary, filename):
                 inserter.execute()
 
 
-data = list(csv.reader(open('YMK_NewSub_ByCountry.csv','r'))) #source csv filename
+data = list(csv.reader(open('CSV_FILE','r'))) #source csv filename
 dictionary = {}
 dictionary['columns'] = data[0]
-dictionary['columns'][0] = 'f_timestamp_day'
+dictionary['columns'][0] = 'f_timestamp_day'#change to first column name. Encoding issues
 dictionary['data'] = data[1:]
 
-convertToHyper(dictionary, filename='YMK_NewSub_ByCountry.hyper') #.hyper filename
+convertToHyper(dictionary, filename='HYPER_FILENAME') #.hyper filename
 
