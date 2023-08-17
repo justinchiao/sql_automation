@@ -9,12 +9,11 @@ import os
 def main():
     '''
     Uploads all queries in queries folder to specified note ID
-    folder name, note ID, and credentials can be changed in first 4 lines
     '''
-    directory = 'queries'
-    noteID = '2J8Z2XRBF'
-    user = 'sinfulheinz'
-    password = 'Tj7g&tENQ/d-PFnX'
+    directory = 'PATH_TO_QUERIES'
+    noteID = 'DESTINATION_NOTE_ID'
+    user = 'ZEPPELIN_USERNAME'
+    password = 'ZEPPELIN_PASSWORD'
     
     ### creates a list of strings where eachs tring is a query from a text file. Adds %sql and a comment with file name to beginning of the text
     queriesList=[]
@@ -29,7 +28,7 @@ def main():
             txtFile.close()
 
     ### builds request to add paragraphs
-    addP = 'https://query-ntu.perfectcorp.com/zeppelin/api/notebook/' + noteID + '/paragraph'
+    addP = 'https://ZEPPELIN_SERVER/zeppelin/api/notebook/' + noteID + '/paragraph'
 
     ### adds each query in the list as a new paragraph
     for i in range(len(queriesList)):

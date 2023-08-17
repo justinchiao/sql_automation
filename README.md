@@ -22,20 +22,21 @@ Server time is Taiwan minus 15 hours. Queries in zeppelin should be finished by 
 1. Zeppelin web interface\
 Check that no blank paragraph is added at the bottom of the note. If one is added, remove it. 
 2. upload_to_zeppelin.py\
-Add queries as .txt to queries folder. to change credentials and destination, check docstring. Do not include %sql in your text. Running upload.py will add all queries to Zeppelin notebook specified by variable noteID. Use file and paragraph naming conventions described below. 
+Add queries as .txt to queries folder. Change credentials and destination in main(). Do not include %sql in your text. Running upload.py will add all queries to Zeppelin notebook specified by variable noteID. Use file and paragraph naming conventions described below. 
 
 ### Convert CSV to .hyper
 convert_csv_.py
 1. Change csv file in line 63
 2. Change string in line 66 to the first column name. Due to unknown encoding issues the first string does not decode properly.
-4. Change hyper filename in line 69
-3. Hyper table name will be the hyper filename minus .hyper extension
+3. Change hyper filename in line 69. 
+4. Hyper table name will be the hyper filename minus .hyper extension.
+5. Check that the date format in isDate() matches the date format found in the csv.
 
 ### Adding .hyper as datasource to Tableau
 connect_with_tableau.py
 1. Credentials, filename, and destination project can be changed in main()
-2. Append and overwrite setting can be changed in publish_datasource(). The last line of the blocks in both if/else will be something like this: ```publish_url += "&datasourceType={0}&overwrite=false&append=true".format(file_extension)```. Change append and overwrite settings but setting it to true or false. 
-3. To append, there must be a datasource with the same name as the .hyper file and overwrite must be false.
+2. Append and overwrite setting can be changed in publish_datasource(). The last line of the blocks in both if/else will be something like this: ```publish_url += "&datasourceType={0}&overwrite=false&append=true".format(file_extension)```. Change append and overwrite settings by setting it to true or false. 
+3. To append, there must be a datasource with the same name as the .hyper file in the specified project and overwrite must be false.
 4. To create a new datasource, append must be false. 
 5. If a data source exists in the project, append is false, and overwrite is false, error will be raised.
 6. Both are default to false if not specified in request
